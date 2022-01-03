@@ -1,0 +1,299 @@
+/**
+ * edges_node_replay.cpp
+ * This code corresponds to the ROS node which goal is to process the events from a .bag or .dat
+ * file, and to compute the edge images from them.
+ * This is the first node of the pipeline architecture.
+ */
+
+#include "rt_of_low_high_res_event_cameras/defines.hpp"
+#include "rt_of_low_high_res_event_cameras/utils.hpp"
+
+#include "rt_of_low_high_res_event_cameras/edges_cpu.hpp"
+
+#include <dvs_msgs/EventArray.h>
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
+#include <thread>
+
+#if METAVISION_SDK_AVAILABLE
+#include <metavision/sdk/base/events/event2d.h>
+#endif
+
+
+/**
+ * Global variables definition
+ */
+
+// The buffer of events, used for storing incomming events
+deque<dvs_msgs::Event> evt_buffer;
+
+// Input topic, if a .bag is used as the input
+string topic;
+
+// Height and width of the event sensor
+int height, width;
+
+// Undistortion matrix, used if a calibration file of the camera is given
+Mat undistortion_matrix;
+
+// ROS publisher, used to send the edge image once computed
+ros::Publisher edges_pub;
+
+
+/**
+ * \brief Processes all the events from the given .bag file to create the corresponding edge
+ * images, which are then sent for further processing.
+ * 
+ * \param bag_path The path to the input .bag file
+ * \param accumulation_window The time window Δt for accumulating the events (in ms)
+ */
+void process_events_from_bag(const string& bag_path, int accumulation_window)
+{
+  // Opening the rosbag
+  rosbag::Bag inbag;
+  inbag.open(bag_path, rosbag::bagmode::Read);
+  if(!inbag.isOpen()) {
+    ROS_ERROR_STREAM("Could not open rosbag with path '" << bag_path << "', exiting!");
+    exit(EXIT_FAILURE);
+  }
+
+  // Extracting a window Δt of events from the rosbag might take less time than Δt
+  // Therefore, we must track the computation time we take to create each edge image, so that the
+  // publish rate of this "replay" module is the same as the one of the "live" module
+  chrono::system_clock::time_point start_delta_t = chrono::system_clock::now();
+
+  // For each message of the given topic...
+  for(rosbag::MessageInstance const m: rosbag::View(inbag)) {
+    if(m.getTopic() == topic) {
+      // ... we add its events to the buffer...
+      dvs_msgs::EventArrayPtr evt_msg = m.instantiate<dvs_msgs::EventArray>();
+      evt_buffer.insert(evt_buffer.end(), std::begin(evt_msg->events), std::end(evt_msg->events));
+
+      // ... and we check that they are in the correct order.
+      if(evt_buffer.back().ts < evt_buffer.front().ts) {
+        ROS_WARN("Badly ordered events timestamps, cleaning the queue");
+        evt_buffer.clear();
+      } else {
+        // If this is the case, and if enough events were received to surpass the accumulation
+        // window Δt, we extract exactly the correct number of events to create an edge image of
+        // time length Δt
+        while(
+          !evt_buffer.empty() && evt_buffer.back().ts - evt_buffer.front().ts >=
+          ros::Duration().fromSec(accumulation_window/1000.))
+        {
+          vector<dvs_msgs::Event> evts_to_process;
+          for(const dvs_msgs::Event& e : evt_buffer) {
+            evts_to_process.push_back(e);
+            evt_buffer.pop_front();
+            if(evts_to_process.back().ts - evts_to_process.front().ts
+              >= ros::Duration().fromSec(accumulation_window/1000.))
+            {
+              break;
+            }
+          }
+
+          // We create the edge image from the bufferized events...
+          Mat edge_image;
+          evts_to_edge_image(evts_to_process, &edge_image, height, width, undistortion_matrix);
+
+          // ... we publish it...
+          cv_bridge::CvImage edges_msg;
+          edges_msg.encoding = sensor_msgs::image_encodings::MONO8;
+          edges_msg.image = edge_image;
+          edges_pub.publish(edges_msg.toImageMsg());
+
+          // ... and we sleep in-between two edge images to mimic the behaviour the method would
+          // have with a live camera.
+          std::chrono::nanoseconds elapsed_time = chrono::system_clock::now() - start_delta_t;
+
+          // If you want however to make the code faster, simply comment the following line :)
+          this_thread::sleep_for(chrono::milliseconds(accumulation_window) - elapsed_time);
+
+          // Once done, we note the current time as the beginning of the creation of the next edge
+          // image
+          start_delta_t = chrono::system_clock::now();
+        }
+      }
+    }
+  }
+}
+
+
+#if METAVISION_SDK_AVAILABLE
+/**
+ * \brief Processes all the events from the given .dat file to create the corresponding edge
+ * images, which are then sent for further processing.
+ * 
+ * \param bag_path The path to the input .dat file
+ * \param accumulation_window The time window Δt for accumulating the events (in ms)
+ */
+void process_events_from_dat(string dat_path, int accumulation_window)
+{
+  // Opening the .dat file
+  ifstream dat_file;
+  dat_file.open(dat_path, fstream::binary);
+  if(!dat_file.is_open()) {
+    ROS_ERROR_STREAM("Could not open .dat file with path '" << dat_path << "', exiting!");
+    exit(EXIT_FAILURE);
+  }
+
+  // Finding the end of the header
+  std::streampos header_end;
+  while(true) {
+    string header_line;
+    getline(dat_file, header_line);
+    if(header_line[0] != '%') {
+      break;
+    }
+    header_end = dat_file.tellg();
+  }
+
+  // Just in case we hit the end of the stream, we reset the error state
+  dat_file.clear();
+
+  // We go back to the end of the header
+  // The +2 is because two bytes are used to provide infos before the real data
+  // See https://docs.prophesee.ai/stable/data_formats/file_formats/dat.html
+  dat_file.seekg((int)header_end+2);
+
+  // Extracting a window Δt of events from the dat file might take less time than Δt
+  // Therefore, we must track the computation time we take to create each edge image, so that the
+  // publish rate of this "replay" module is the same as the one of the "live" module
+  chrono::system_clock::time_point start_delta_t = chrono::system_clock::now();
+
+  // Reading the content of the file, and computing the edge images from it
+  vector<dvs_msgs::Event> evts_to_process;
+  while(dat_file.tellg() != -1) {
+    // Reading an event from the file
+    Metavision::Event2d::RawEvent evt;
+    dat_file.read(reinterpret_cast<char*>(&evt), sizeof(Metavision::Event2d::RawEvent));
+
+    // Converting it to the DVS format for unicity purposes
+    dvs_msgs::Event evt_cvt;
+    evt_cvt.x = evt.x;
+    evt_cvt.y = evt.y;
+    evt_cvt.polarity = evt.p;
+    evt_cvt.ts = ros::Time().fromSec(evt.ts/1e6);
+    evts_to_process.push_back(evt_cvt);
+
+    // We check that the events are in the correct order
+    if(evts_to_process.back().ts < evts_to_process.front().ts)
+    {
+      ROS_WARN("Badly ordered events timestamps, cleaning the queue");
+      evts_to_process.clear();
+    } else if(evts_to_process.back().ts - evts_to_process.front().ts
+      >= ros::Duration().fromSec(accumulation_window/1000.))
+    {
+      // If this is the case, and if the buffer exceeds the Δt window, we create the edge image
+      // from the collected events...
+      Mat edge_image;
+      evts_to_edge_image(evts_to_process, &edge_image, height, width, undistortion_matrix);
+
+      // ... we publish it...
+      cv_bridge::CvImage edges_msg;
+      edges_msg.encoding = sensor_msgs::image_encodings::MONO8;
+      edges_msg.image = edge_image;
+      edges_pub.publish(edges_msg.toImageMsg());
+
+      // ... and do not forget to clear the buffer here, to accumulate new evts
+      evts_to_process.clear();
+
+      // Finally, we sleep in-between two edge images to mimic the behaviour the method would have
+      // with a live camera.
+      std::chrono::nanoseconds elapsed_time = chrono::system_clock::now() - start_delta_t;
+
+      // If you want however to make the code faster, simply comment the following line :)
+      this_thread::sleep_for(chrono::milliseconds(accumulation_window) - elapsed_time);
+
+      // Once done, we note the current time as the beginning of the creation of the next edge
+      // image
+      start_delta_t = chrono::system_clock::now();
+    }
+  }
+
+  // Close the dat file
+  dat_file.close();
+}
+#endif
+
+
+/**
+ * \brief Main function.
+ */
+int main(int argc, char* argv[])
+{
+  // ROS node initialization
+  ros::init(argc, argv, "edges_node");
+  ros::NodeHandle n("~");
+  string ns = "/rt_of_low_high_res_event_cameras";
+
+  // Collection of the input file (.dat or .bag)
+  string input_file;
+  n.param<string>("input_file", input_file, "");
+  if(input_file.empty()) {
+    ROS_ERROR("No input topic selected, exiting!");
+    exit(EXIT_FAILURE);
+  }
+
+  // Determining the input format from the filename, to select the correct processing function
+  function<void(string, int)> file_processing_function;
+  string input_format = input_file.substr(input_file.size()-4);
+  if(input_format == ".bag") {
+    file_processing_function = process_events_from_bag;
+  } else if(input_format == ".dat") {
+#if METAVISION_SDK_AVAILABLE
+    file_processing_function = process_events_from_dat;
+#else
+    ROS_ERROR(
+      ".dat file used, but support for such files was not enabled! Read the README file to see how\
+      to use them. Exiting!");
+    exit(EXIT_FAILURE);
+#endif
+  } else {
+    ROS_ERROR_STREAM("Unknown input format " << input_format << ", exiting!");
+    exit(EXIT_FAILURE);
+  }
+
+  // Collection of the input topic, if a rosbag is used
+  if(input_format == ".bag") {
+    n.param<string>("topic", topic, "");
+    if(topic.empty()) {
+      ROS_ERROR("No input topic selected, exiting!");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  // Collection of the duration of the accumulation window (Δt, in ms)
+  int accumulation_window;
+  n.param<int>("accumulation_window", accumulation_window, -1);
+  if(accumulation_window <= 0) {
+    ROS_ERROR("No accumulation window given, exiting!");
+    exit(EXIT_FAILURE);
+  }
+
+  // Collection of the image height and width, passed as mandatory parameters
+  n.param<int>("height", height, -1);
+  n.param<int>("width", width, -1);
+  if(height <= 0 || width <= 0) {
+    ROS_ERROR("Invalid height/width parameters, exiting!");
+    exit(EXIT_FAILURE);
+  }
+
+  // Collection of the subscriber/publisher queues size
+  int queues_size;
+  n.param<int>("queues_size", queues_size, QUEUES_SIZE_DEFAULT);
+
+  // If given, collection of the calibration file, and preparation of the undistortion matrix
+  string calibration_file = n.param<string>("calibration_file", "");
+  if(!calibration_file.empty()) {
+    undistortion_matrix = init_undistort_mat(calibration_file, height, width);
+  }
+
+  // Configuration of the edge image publisher
+  edges_pub = n.advertise<sensor_msgs::Image>(ns+"/edge_image", queues_size);
+
+  // Finally, we process all the events from the given file
+  file_processing_function(input_file, accumulation_window);
+
+  return 0;
+}

@@ -1,0 +1,49 @@
+<launch>
+  <!-- Prophesee driver -->
+  <include file="$(find prophesee_ros_driver)/launch/prophesee_publisher.launch" />
+
+  <!-- Edges node -->
+  <node name="edges" pkg="rt_of_low_high_res_event_cameras" type="edges_node_live" ns="rt_of_low_high_res_event_cameras" output="screen">
+    <param name="topic" type="string" value="/prophesee/camera/cd_events_buffer"/>
+    <param name="accumulation_window" type="int" value="15"/>
+    <param name="height" type="int" value="720"/>
+    <param name="width" type="int" value="1280"/>
+    <param name="queues_size" type="int" value="1"/>
+    <!--<param name="calibration_file" type="str" value="..."/>-->
+  </node>
+
+  <!-- Denoising & filling node -->
+  <node name="denoising_filling" pkg="rt_of_low_high_res_event_cameras" type="denoising_filling_node" ns="rt_of_low_high_res_event_cameras" output="screen">
+    <param name="use_gpu_version" type="bool" value="true"/>
+    <param name="denoising_min_neighbours" type="int" value="2"/>
+    <param name="filling_min_neighbours" type="int" value="3"/>
+    <param name="queues_size" type="int" value="1"/>
+  </node>
+
+  <!-- Distance surface node -->
+  <node name="distance_surface" pkg="rt_of_low_high_res_event_cameras" type="distance_surface_node" ns="rt_of_low_high_res_event_cameras" output="screen">
+    <param name="use_gpu_version" type="bool" value="true"/>
+    <param name="distance_surface_formulation" type="string" value="exponential"/>
+    <param name="queues_size" type="int" value="1"/>
+  </node>
+
+  <!-- Optical flow node -->
+  <node name="optical_flow" pkg="rt_of_low_high_res_event_cameras" type="optical_flow_node" ns="rt_of_low_high_res_event_cameras" output="screen">
+    <param name="pyramidal_flow_levels" type="int" value="3"/>
+    <param name="max_flow" type="double" value="15.0"/>
+    <rosparam param="gammas">[500.0, 500.0, 500.0]</rosparam>
+    <rosparam param="smooth_iterations">[20, 20, 20]</rosparam>
+    <param name="queues_size" type="int" value="1"/>
+  </node>
+
+  <!-- Optical flow visualization node -->
+  <node name="optical_flow_viz" pkg="rt_of_low_high_res_event_cameras" type="optical_flow_viz_node" ns="rt_of_low_high_res_event_cameras" output="screen">
+    <param name="visualization_method" type="string" value="colors"/>
+    <param name="clip_flow" type="double" value="-1"/>
+    <param name="queues_size" type="int" value="1"/>
+  </node>
+
+  <!-- Display -->
+  <node name="image_view" pkg="rqt_image_view" type="rqt_image_view" args="/rt_of_low_high_res_event_cameras/optical_flow_viz"/>
+
+</launch>

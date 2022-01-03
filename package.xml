@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rt_of_low_high_res_event_cameras</name>
+  <version>1.0.0</version>
+  <description>
+    The rt_of_low_high_res_event_cameras package, allowing for real-time
+    computation of event-based optical flow for both low- and high-resolution
+    neuromorphic sensors
+  </description>
+  <maintainer email="vincent.brebion@utc.fr">Vincent Brebion</maintainer>
+  <license>CeCILL 2.1</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>cv_bridge</depend>
+  <depend>dvs_msgs</depend>
+  <depend>rosbag</depend>
+</package>
