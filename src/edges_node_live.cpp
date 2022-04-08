@@ -12,6 +12,7 @@
 
 #include <dvs_msgs/EventArray.h>
 #include <thread>
+#include <mutex>
 
 
 /**
