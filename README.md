@@ -23,7 +23,8 @@ In this work, we propose an optimized framework for computing optical flow in re
 
 ## Installing and compiling the code
 
-This code has been developed and tested with Ubuntu 20.04, ROS Noetic, CUDA 11.5 and OpenCV 4.2.\
+This code has originally been developed and tested with Ubuntu 20.04, ROS Noetic, CUDA 11.5+ and OpenCV 4.2.\
+It is also compatible with Ubuntu 18.04, ROS Melodic, CUDA 11.5+ and OpenCV 3.2.\
 While it *should* be compatible with older versions of Ubuntu/ROS/CUDA/OpenCV, we cannot ensure that the code will work flawlessly with them.
 
 To use our code, two main dependencies have to be installed:
