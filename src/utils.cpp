@@ -49,7 +49,7 @@ Mat init_undistort_mat(const string& filename, const int height, const int width
   Mat undistortion_mat(height, width, CV_32SC2);
   for(int y = 0; y < height; ++y) {
     for(int x = 0; x < width; ++x) {
-      undistortion_mat.at<Point2i>(y, x) = undistorted_pts.at(x*height+y);
+      undistortion_mat.at<Point2i>(y, x) = undistorted_pts.at(y*width+x);
     }
   }
 
