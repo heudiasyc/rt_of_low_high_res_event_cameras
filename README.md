@@ -5,11 +5,14 @@
 This repository holds the code associated to the "Real-Time Optical Flow for Vehicular Perception with Low- and High-Resolution Event Cameras" article. If you use this code as part of your work, please cite:
 
 ```BibTeX
-@article{Brebion2021RealTimeOF,
+@article{Brebion2022RealTimeOF,
   title={Real-Time Optical Flow for Vehicular Perception With Low- and High-Resolution Event Cameras},
   author={Vincent Brebion and Julien Moreau and Franck Davoine},
   journal={IEEE Transactions on Intelligent Transportation Systems},
-  year={2021}
+  year={2022},
+  volume={23},
+  number={9},
+  pages={15066-15078}
 }
 ```
 
