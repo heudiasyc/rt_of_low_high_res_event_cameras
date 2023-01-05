@@ -2,7 +2,7 @@
 
 ![Our pipeline](https://www.hds.utc.fr/~vbrebion/dokuwiki/_media/fr/pipeline.png?)
 
-This repository holds the code associated to the "Real-Time Optical Flow for Vehicular Perception with Low- and High-Resolution Event Cameras" article. If you use this code as part of your work, please cite:
+This repository holds the code associated with the "Real-Time Optical Flow for Vehicular Perception with Low- and High-Resolution Event Cameras" article. If you use this code as part of your work, please cite:
 
 ```BibTeX
 @article{Brebion2022RealTimeOF,
