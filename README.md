@@ -1,6 +1,6 @@
 # Real-Time Optical Flow for Vehicular Perception with Low- and High-Resolution Event Cameras
 
-![Our pipeline](https://www.hds.utc.fr/~vbrebion/dokuwiki/_media/fr/pipeline.png?)
+![Our pipeline](https://www.hds.utc.fr/~vbrebion/dokuwiki/_media/fr/pipeline.svg)
 
 This repository holds the code associated with the "Real-Time Optical Flow for Vehicular Perception with Low- and High-Resolution Event Cameras" article. If you use this code as part of your work, please cite:
 
@@ -43,7 +43,7 @@ You can finally download and compile our code:
 
 ```txt
 cd ~/catkin_ws/src
-git clone https://github.com/vbrebion/rt_of_low_high_res_event_cameras.git
+git clone https://github.com/heudiasyc/rt_of_low_high_res_event_cameras.git
 catkin build rt_of_low_high_res_event_cameras
 ```
 
