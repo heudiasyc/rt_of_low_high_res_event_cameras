@@ -59,7 +59,7 @@ void callback_optical_flow(const sensor_msgs::Image::ConstPtr& img)
 int main(int argc, char* argv[])
 {
   // ROS node initialization
-  ros::init(argc, argv, "optical_flow_node");
+  ros::init(argc, argv, "optical_flow_viz_node");
   ros::NodeHandle n("~");
   string ns = "/rt_of_low_high_res_event_cameras";
 
