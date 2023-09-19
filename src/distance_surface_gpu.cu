@@ -29,7 +29,7 @@ __device__ int32_t d_dist_surface_max_value;
 /**
  * \brief GPU kernel function to compute the distance transform along the rows only, which is the
  * first step of the computation of the distance surface.
- * 
+ *
  * \param d_edges Pointer to the edge image in GPU memory
  * \param d_map_x Pointer to the resulting partial distance surface on the rows, in GPU memory
  * \param nb_rows Number of rows (=height) of the input edge image
@@ -79,11 +79,11 @@ void map_x_kernel(const uint8_t* d_edges, int32_t* d_map_x, const int nb_rows, c
  * \brief Computes the parabola ordinate (the F^i_y(j) function described in the paper used in the
  * distance transform algorithm, which link is given in the comment of the distance_surface_gpu
  * function)
- * 
+ *
  * \param y Row of origin of the parabola
  * \param j Row for which we want to compute the ordinate
  * \param map_x_val Ordinate (value) of the parabola at its origin
- * 
+ *
  * \return The parabola ordinate at the given row coordinates
  */
 __device__
@@ -100,12 +100,12 @@ int32_t parab_ord(int32_t y, int32_t j, int32_t map_x_val)
  * \brief Computes the abscissa of the intersection of two consecutive parabolas (the Sep^i(u, v)
  * function described in the paper used in the distance transform algorithm, which link is given in
  * the comment of the distance_surface_gpu function)
- * 
+ *
  * \param u The row (abscissa) of the first parabola
  * \param v The row (abscissa) of the second parabola
  * \param map_x_u_i Ordinate (value) of the first parabola at its origin (u,i)
  * \param map_x_v_i Ordinate (value) of the second parabola at its origin (v,i)
- * 
+ *
  * \return The abscissa of intersection of the two parabolas
  */
 __device__
@@ -121,7 +121,7 @@ int32_t parab_inter_abs(int32_t u, int32_t v, int32_t map_x_u_i, int32_t map_x_v
 /**
  * \brief GPU kernel function to compute the distance surface, using the partial distance transform
  * on the rows.
- * 
+ *
  * \param d_map_x Pointer in GPU memory to the input partial distance surface on the rows
  * \param d_dist_surface Pointer in GPU memory to the resulting distance surface
  * \param d_s Pointer in GPU memory to a matrix of the same size as the distance surface, that will
@@ -210,7 +210,7 @@ void dist_surf_kernel(
 /**
  * \brief Finds the maximum value of the distance surface matrix, based on the maximum value of
  * each of its columns (computed in the dist_surf_kernel)
- * 
+ *
  * \param d_dist_surface_cols_max_value Pointer in GPU memory to an array containing for each cell
  * the maximum value of the corresponding column of the distance surface computed using the
  * dist_surf_kernel function
@@ -233,7 +233,7 @@ void find_dist_surface_max_value(const int32_t* d_dist_surface_cols_max_value, c
  * \brief GPU kernel function to normalize the distance surface to an uint8_t image (values between
  * 0 and 255), and to apply the correct distance surface formulation (linear, exponential, ...).
  * This is the third (and final) step of the computation of the distance surface.
- * 
+ *
  * \param d_dist_surface Pointer in GPU memory to the input distance surface
  * \param d_normalized_dist_surface Pointer in GPU memory to the output normalized distance surface
  * \param nb_elems Number of pixels in the distance surface image
@@ -289,7 +289,7 @@ void ds_norm_kernel(
 
 /**
  * \brief Allocates the adequate memory on the GPU.
- * 
+ *
  * \param edges An edge image, used to compute the number of bytes that should be reserved on the
  * GPU
  */
@@ -348,10 +348,10 @@ void free_gpu_memory()
  * https://pageperso.lif.univ-mrs.fr/~edouard.thiel/print/2007-geodis-thiel-coeurjolly.pdf
  * (the algorithm is given in the part 5.4.2), which was itself inspired by the method described in
  * the following paper: http://fab.cba.mit.edu/classes/S62.12/docs/Meijster_distance.pdf
- * 
+ *
  * \param edges The input edge image
  * \param formulation The distance surface formulation that should be used
- * 
+ *
  * \return The distance surface, computed from the input edge image
  */
 Mat distance_surface_gpu(const Mat& edges, string formulation)

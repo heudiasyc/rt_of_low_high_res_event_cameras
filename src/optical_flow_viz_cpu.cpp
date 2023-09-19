@@ -9,7 +9,7 @@
 /**
  * \brief Computes the optical flow visualization as an image of the vector field represented as
  * arrows, using the CPU.
- * 
+ *
  * \param of_u The input flow along the x axis
  * \param of_v The input flow along the y axis
  * \param optical_flow_viz The destination image
@@ -40,7 +40,7 @@ void optical_flow_viz_arrows_cpu(const Mat& of_u, const Mat& of_v, Mat& optical_
  * \brief Computes the optical flow visualization as a RGB image using a simple colorwheel, using
  * the CPU. This method is a fast version, based on a OpenCV tutorial:
  * https://docs.opencv.org/4.2.0/d4/dee/tutorial_optical_flow.html
- * 
+ *
  * \param of_u The input flow along the x axis
  * \param of_v The input flow along the y axis
  * \param optical_flow_viz The destination image
@@ -91,7 +91,7 @@ void optical_flow_viz_colors_cpu(
 
 /**
  * \brief Computes the optical flow visualization, according to the wanted method, using the CPU.
- * 
+ *
  * \param optical_flow The input flow matrix
  * \param viz_method The visualization method (either "colors" or "arrows")
  * \param clip_flow This parameter is only useful if the "colors" method has been selected (it will

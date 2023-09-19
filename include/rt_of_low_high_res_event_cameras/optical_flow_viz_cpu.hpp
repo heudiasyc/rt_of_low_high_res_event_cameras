@@ -11,7 +11,7 @@
 
 /**
  * \brief Computes the optical flow visualization, according to the wanted method, using the CPU.
- * 
+ *
  * \param optical_flow The input flow matrix
  * \param viz_method The visualization method (either "colors" or "arrows")
  * \param clip_flow This parameter is only useful if the "colors" method has been selected (it will

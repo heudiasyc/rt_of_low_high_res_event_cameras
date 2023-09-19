@@ -23,7 +23,7 @@ int edges_bytes;
 
 /**
  * \brief GPU kernel function, which computes the denoised edge image.
- * 
+ *
  * \param d_edges Pointer to the edge image, in GPU memory
  * \param d_denoised_edges Pointer to the denoised edge image, in GPU memory
  * \param nb_rows Number of rows of the edge image
@@ -84,7 +84,7 @@ void denoising_kernel(
 
 /**
  * \brief GPU kernel function, which computes the filled edge image.
- * 
+ *
  * \param d_denoised_edges Pointer to the denoised edge image, in GPU memory
  * \param d_filled_edges Pointer to the filled edge image, in GPU memory
  * \param nb_rows Number of rows of the edge image
@@ -148,7 +148,7 @@ void filling_kernel(
 
 /**
  * \brief Allocates the adequate memory on the GPU.
- * 
+ *
  * \param edges An edge image, used to compute the number of bytes that should be reserved on the
  * GPU
  */
@@ -181,11 +181,11 @@ void free_gpu_memory()
 
 /**
  * \brief Computes the denoised & filled version of the input edge image, using the GPU.
- * 
+ *
  * \param edges The noisy edge image
  * \param denoising_min_neighbours Threshold for the denoising step (N_d)
  * \param filling_min_neighbours Threshold for the filling step (N_f)
- * 
+ *
  * \return A denoised and filled copy of the input edge image
  */
 Mat denoising_filling_gpu(

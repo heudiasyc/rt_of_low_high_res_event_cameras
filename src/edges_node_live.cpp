@@ -43,7 +43,7 @@ ros::Publisher edges_pub;
 /**
  * \brief Events processing function, which is just a global timer to indicate the end of the
  * accumulation window Δt, and to call the events -> edge image function accordingly.
- * 
+ *
  * \param accumulation_window The time window Δt, during which events should be accumulated to form
  * the edge images (in ms)
  */
@@ -90,7 +90,7 @@ void accumulation_timing_thread(int accumulation_window)
  * \brief ROS callback, called when a new DVS EventArray message arrives.
  * The events it contains are simply stored in the correct buffer, to be processed later on by the
  * events processing thread.
- * 
+ *
  * \note The events from the message can be either DVS- or Prophesee-formatted: we don't care, the
  * messages have the same fields, so the same checksum, and ROS therefore considers them as the
  * same type of message

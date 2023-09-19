@@ -33,7 +33,7 @@ Mat optical_flow_masked;
 /**
  * \brief Adequately wraps an OpenCV Mat image into its flowfilter::image_t equivalent, so that it
  * can be used for optical flow computation.
- * 
+ *
  * \param cv_matrix The OpenCV-formated matrix to wrap
  * \param img The flowfilter image_t wrapper to initialize
  */
@@ -52,7 +52,7 @@ void wrap_cv_matrix(Mat& cv_matrix, flowfilter::image_t& img)
  * \brief Computes optical flow from the given distance surface image, using the flowfilter GPU
  * library (https://github.com/jadarve/optical-flow-filter), and applies the adequate mask to only
  * return flow results for the pixels that have received at least an event.
- * 
+ *
  * \param dist_surface The distance surface image
  * \param pyramidal_levels The number of pyramidal levels the optical flow flowfilter library
  * should be configured with
@@ -61,7 +61,7 @@ void wrap_cv_matrix(Mat& cv_matrix, flowfilter::image_t& img)
  * \param gamma The regularization weights for each pyramidal level of the flowfilter library
  * \param smooth_iterations The regularization weights for each pyramidal level of the flowfilter
  * library
- * 
+ *
  * \return The optical flow results as an OpenCV matrix, where only the edge pixels have a value
  */
 Mat optical_flow_gpu(

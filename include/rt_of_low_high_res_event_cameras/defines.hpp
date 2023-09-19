@@ -7,6 +7,7 @@
 #pragma once
 
 #define METAVISION_SDK_AVAILABLE              false
+#define HDF5_SDK_AVAILABLE                    false
 
 #define USE_GPU_VERSION_DEFAULT               true
 

@@ -10,13 +10,13 @@
  * \brief Computes the parabola ordinate (the F^i_y(j) function described in the paper used in the
  * distance transform algorithm, which link is given in the comment of the distance_surface_cpu
  * function)
- * 
+ *
  * \param map_x Map obtained after the first step of the distance transform algorithm (distance
  * transform for the rows only)
  * \param i Current column
  * \param y Row of origin of the parabola
  * \param j Row for which we want to compute the ordinate
- * 
+ *
  * \return The parabola ordinate at the given row coordinates
  */
 int32_t parab_ord(const Mat& map_x, int i, int y, int j)
@@ -36,13 +36,13 @@ int32_t parab_ord(const Mat& map_x, int i, int y, int j)
  * \brief Computes the abscissa of the intersection of two consecutive parabolas (the Sep^i(u, v)
  * function described in the paper used in the distance transform algorithm, which link is given in
  * the comment of the distance_surface_cpu function)
- * 
+ *
  * \param map_x Map obtained after the first step of the distance transform algorithm (distance
  * transform for the rows only)
  * \param i Current column
  * \param u The row (abscissa) of the first parabola
  * \param v The row (abscissa) of the second parabola
- * 
+ *
  * \return The abscissa of intersection of the two parabolas
  */
 int32_t parab_inter_abs(const Mat& map_x, int i, int u, int v)
@@ -65,10 +65,10 @@ int32_t parab_inter_abs(const Mat& map_x, int i, int u, int v)
  * https://pageperso.lif.univ-mrs.fr/~edouard.thiel/print/2007-geodis-thiel-coeurjolly.pdf
  * (the algorithm is given in the part 5.4.2), which was itself inspired by the method described in
  * the following paper: http://fab.cba.mit.edu/classes/S62.12/docs/Meijster_distance.pdf
- * 
+ *
  * \param edges The input edge image
  * \param formulation The distance surface formulation that should be used
- * 
+ *
  * \return The distance surface, computed from the input edge image
  */
 Mat distance_surface_cpu(const Mat& edges, string formulation)

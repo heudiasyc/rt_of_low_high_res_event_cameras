@@ -16,10 +16,10 @@
  * https://pageperso.lif.univ-mrs.fr/~edouard.thiel/print/2007-geodis-thiel-coeurjolly.pdf
  * (the algorithm is given in the part 5.4.2), which was itself inspired by the method described in
  * the following paper: http://fab.cba.mit.edu/classes/S62.12/docs/Meijster_distance.pdf
- * 
+ *
  * \param edges The input edge image
  * \param formulation The distance surface formulation that should be used
- * 
+ *
  * \return The distance surface, computed from the input edge image
  */
 Mat distance_surface_gpu(const Mat& edges, string formulation);

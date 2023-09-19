@@ -14,7 +14,7 @@
  * \brief Edge image creation function, which should be called at the end of the accumulation
  * window Δt. It consumes the events from the given buffer to create the edge image. Once done, the
  * created image is sent for further processing.
- * 
+ *
  * \param evts_to_process Buffer of events to use for creating the edge image
  * \param edge_image_ptr Pointer to the output edge image OpenCV matrix 
  * \param height Height of the edge image

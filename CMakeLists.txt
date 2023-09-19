@@ -16,6 +16,12 @@ find_package(CUDA REQUIRED)
 # the install path, simply modify it here
 find_library(flowfilter_gpu_LIBS NAMES flowfilter_gpu PATHS /usr/local/include)
 
+# Uncomment the three following lines to enable support for .h5 files
+# Don't forget to set your own path to correctly find the library
+#set(HDF5_DIR "/usr/local/hdf5/cmake")
+#find_package(HDF5 REQUIRED COMPONENTS CXX)
+#include_directories(${HDF5_INCLUDE_DIR})
+
 # Compile using C+11, -O3 for maximum optimization, enable all error alerts, and add OpenMP flags
 add_compile_options(-std=c++11 -O3 -Werror -Wpedantic -Wall -Wextra ${OpenMP_CXX_FLAGS})
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -O3 -Xptxas -O3 -Werror all-warnings")
@@ -25,9 +31,11 @@ catkin_simple(ALL_DEPS_REQUIRED)
 
 # Edges image computation node, from a live camera
 cs_add_executable(edges_node_live src/edges_node_live.cpp src/edges_cpu.cpp src/utils.cpp)
+target_link_libraries(edges_node_live ${HDF5_LIBRARIES})
 
 # Edges image computation node, from a replay file
 cs_add_executable(edges_node_replay src/edges_node_replay.cpp src/edges_cpu.cpp src/utils.cpp)
+target_link_libraries(edges_node_replay ${HDF5_LIBRARIES})
 
 # Denoising and filling node
 cuda_add_executable(denoising_filling_node src/denoising_filling_node.cpp src/denoising_filling_cpu.cpp src/denoising_filling_gpu.cu)

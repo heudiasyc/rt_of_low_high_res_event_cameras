@@ -61,6 +61,7 @@ Provided launchfiles are:
 
 - `davis240_live.launch`: simply plug in your DAVIS240 camera, and use this file to visualize the optical flow results produced with it
 - `davis346_replay.launch`: allows to compute optical flow from events from a DAVIS346 camera, recorded in a rosbag (this launchfile can be used for instance to compute optical flow for the MVSEC dataset)
+- `dsec_replay.launch`: allows to compute optical flow from events from the DSEC dataset, recorded in a .h5 file
 - `prophesee_gen4_live.launch`: simply plug in your Prophesee Gen4 camera, and use this file to visualize the optical flow results produced with it
 - `prophesee_gen4_replay.launch`: allows to compute optical flow from events from a Prophesee Gen4 camera, recorded in a rosbag (for instance, for our High-Speed High-Definition Event-Based Indoor dataset) or in a .dat file (for instance, for the 1 Megapixel Automotive Detection dataset)
 
@@ -73,6 +74,20 @@ By default, support for replaying Prophesee's .dat files is disabled, as they re
 If you need to use such files with our code (for instance, for using Prophesee's [1 Megapixel Automotive Detection dataset](https://www.prophesee.ai/2020/11/24/automotive-megapixel-event-based-dataset/)), you first need to request an access to the SDK on [their website](https://www.prophesee.ai/metavision-intelligence/).
 
 Once done, simply modify the `METAVISION_SDK_AVAILABLE` variable from `false` to `true` in the [include/rt_of_low_high_res_event_cameras/defines.hpp](./include/rt_of_low_high_res_event_cameras/defines.hpp) file, and recompile the code to make this change effective:
+
+```txt
+catkin build rt_of_low_high_res_event_cameras
+```
+
+## Adding support for reading .h5 files
+
+By default, support for replaying .h5 files is disabled, as they require the HDF5 SDK.
+
+If you need to use such files with our code (for instance, for using the [DSEC dataset](https://dsec.ifi.uzh.ch)), you first need to install or compile the HDF5 SDK, as described on [their website](https://portal.hdfgroup.org/display/support/Downloads).
+
+You will also need to add the BLOSC plugin to be able to read compressed HDF5 files (as used in the DSEC dataset). Simply compile ithe plugin using the instructions detailed on their [GitHub repo](https://github.com/Blosc/hdf5-blosc), and install it system-wide by placing it alongside your HDF5 installation (by default, in `/usr/local/hdf5/lib/plugin`).
+
+Once done, simply modify the `HDF5_SDK_AVAILABLE` variable from `false` to `true` in the [include/rt_of_low_high_res_event_cameras/defines.hpp](./include/rt_of_low_high_res_event_cameras/defines.hpp) file, uncomment the corresponding lines (21-23) in the [CMakeLists.txt](./CMakeLists.txt), and recompile the code to make these changes effective:
 
 ```txt
 catkin build rt_of_low_high_res_event_cameras
