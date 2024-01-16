@@ -29,3 +29,6 @@
 #define VIZ_ARROWS_FACTOR                     20
 
 #define QUEUES_SIZE_DEFAULT                   1
+
+#define FPS_MEASUREMENT                       false
+#define FPS_MEASUREMENT_FOLDER_PATH           "path/to/desired/output/folder/"

@@ -10,6 +10,12 @@
 
 #include "rt_of_low_high_res_event_cameras/optical_flow_gpu.hpp"
 
+#if FPS_MEASUREMENT
+#include <fstream>
+ofstream myfile;
+bool gpu_mem_initialized = false;
+#endif
+
 
 /**
  * Global variables definition
@@ -38,6 +44,10 @@ vector<int> smooth_iterations;
  */
 void callback_dist_surface(const sensor_msgs::Image::ConstPtr& img)
 {
+#if FPS_MEASUREMENT
+  ros::Time begin = ros::Time::now();
+#endif
+
   // Converting the message to an usable OpenCV Mat
   Mat dist_surface;
   try {
@@ -56,6 +66,15 @@ void callback_dist_surface(const sensor_msgs::Image::ConstPtr& img)
   optical_flow_msg.encoding = "32FC2";
   optical_flow_msg.image = optical_flow;
   optical_flow_pub.publish(optical_flow_msg.toImageMsg());
+
+#if FPS_MEASUREMENT
+  if(gpu_mem_initialized) {
+    ros::Duration duration = ros::Time::now() - begin;
+    myfile << duration.toSec()*1000 << endl;
+  } else {
+    gpu_mem_initialized = true;
+  }
+#endif
 }
 
 
@@ -90,8 +109,16 @@ int main(int argc, char* argv[])
     ns+"/distance_surface", sub_pub_queues_size, callback_dist_surface);
   optical_flow_pub = n.advertise<sensor_msgs::Image>(ns+"/optical_flow", sub_pub_queues_size);
 
+#if FPS_MEASUREMENT
+  myfile.open(string(FPS_MEASUREMENT_FOLDER_PATH) + "/of.txt");
+#endif
+
   // Call to ros::spin() to process incomming events until Ctrl+C is pressed
   ros::spin();
+
+#if FPS_MEASUREMENT
+  myfile.close();
+#endif
 
   return 0;
 }

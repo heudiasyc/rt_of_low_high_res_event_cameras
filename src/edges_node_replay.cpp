@@ -23,6 +23,11 @@
 #include <H5Cpp.h>
 #endif
 
+#if FPS_MEASUREMENT
+#include <fstream>
+ofstream myfile;
+#endif
+
 
 /**
  * Global variables definition
@@ -100,6 +105,10 @@ void process_events_from_bag(const string& bag_path, const string& calib_path, i
             }
           }
 
+#if FPS_MEASUREMENT
+          ros::Time begin = ros::Time::now();
+#endif
+
           // We create the edge image from the bufferized events...
           Mat edge_image;
           evts_to_edge_image(evts_to_process, &edge_image, height, width, undistortion_matrix);
@@ -109,6 +118,11 @@ void process_events_from_bag(const string& bag_path, const string& calib_path, i
           edges_msg.encoding = sensor_msgs::image_encodings::MONO8;
           edges_msg.image = edge_image;
           edges_pub.publish(edges_msg.toImageMsg());
+
+#if FPS_MEASUREMENT
+          ros::Duration duration = ros::Time::now() - begin;
+          myfile << duration.toSec()*1000 << endl;
+#endif
 
           // ... and we sleep in-between two edge images to mimic the behaviour the method would
           // have with a live camera.
@@ -199,6 +213,11 @@ void process_events_from_dat(const string& dat_path, const string& calib_path, i
     } else if(evts_to_process.back().ts - evts_to_process.front().ts
       >= ros::Duration().fromSec(accumul_window/1000.))
     {
+
+#if FPS_MEASUREMENT
+      ros::Time begin = ros::Time::now();
+#endif
+
       // If this is the case, and if the buffer exceeds the Δt window, we create the edge image
       // from the collected events...
       Mat edge_image;
@@ -209,6 +228,11 @@ void process_events_from_dat(const string& dat_path, const string& calib_path, i
       edges_msg.encoding = sensor_msgs::image_encodings::MONO8;
       edges_msg.image = edge_image;
       edges_pub.publish(edges_msg.toImageMsg());
+
+#if FPS_MEASUREMENT
+      ros::Duration duration = ros::Time::now() - begin;
+      myfile << duration.toSec()*1000 << endl;
+#endif
 
       // ... and do not forget to clear the buffer here, to accumulate new evts
       evts_to_process.clear();
@@ -317,6 +341,10 @@ void process_events_from_h5(const string& h5_path, const string& calib_path, int
     } else if(evts_to_process.back().ts - evts_to_process.front().ts
       >= ros::Duration().fromSec(accumul_window/1000.))
     {
+#if FPS_MEASUREMENT
+      ros::Time begin = ros::Time::now();
+#endif
+
       // If this is the case, and if the buffer exceeds the Δt window, we create the edge image
       // from the collected events...
       Mat edge_image;
@@ -327,6 +355,11 @@ void process_events_from_h5(const string& h5_path, const string& calib_path, int
       edges_msg.encoding = sensor_msgs::image_encodings::MONO8;
       edges_msg.image = edge_image;
       edges_pub.publish(edges_msg.toImageMsg());
+
+#if FPS_MEASUREMENT
+      ros::Duration duration = ros::Time::now() - begin;
+      myfile << duration.toSec()*1000 << endl;
+#endif
 
       // ... and do not forget to clear the buffer here, to accumulate new evts
       evts_to_process.clear();
@@ -440,8 +473,16 @@ int main(int argc, char* argv[])
   // Configuration of the edge image publisher
   edges_pub = n.advertise<sensor_msgs::Image>(ns+"/edge_image", queues_size);
 
+#if FPS_MEASUREMENT
+  myfile.open(string(FPS_MEASUREMENT_FOLDER_PATH) + "/edges.txt");
+#endif
+
   // Finally, we process all the events from the given file
   file_processing_function(input_file, calibration_file, accumulation_window);
+
+#if FPS_MEASUREMENT
+  myfile.close();
+#endif
 
   return 0;
 }

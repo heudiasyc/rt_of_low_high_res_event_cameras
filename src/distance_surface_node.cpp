@@ -11,6 +11,12 @@
 #include "rt_of_low_high_res_event_cameras/distance_surface_cpu.hpp"
 #include "rt_of_low_high_res_event_cameras/distance_surface_gpu.hpp"
 
+#if FPS_MEASUREMENT
+#include <fstream>
+ofstream myfile;
+bool gpu_mem_initialized = false;
+#endif
+
 
 /**
  * Global variables definition
@@ -33,6 +39,10 @@ ros::Publisher dist_surface_pub;
  */
 void callback_edges_image(const sensor_msgs::Image::ConstPtr& img)
 {
+#if FPS_MEASUREMENT
+  ros::Time begin = ros::Time::now();
+#endif
+
   // Converting the message to an usable OpenCV Mat
   Mat edges;
   try {
@@ -56,6 +66,15 @@ void callback_edges_image(const sensor_msgs::Image::ConstPtr& img)
   dist_surface_msg.encoding = "mono8";
   dist_surface_msg.image = dist_surface;
   dist_surface_pub.publish(dist_surface_msg.toImageMsg());
+
+#if FPS_MEASUREMENT
+  if(gpu_mem_initialized) {
+    ros::Duration duration = ros::Time::now() - begin;
+    myfile << duration.toSec()*1000 << endl;
+  } else {
+    gpu_mem_initialized = true;
+  }
+#endif
 }
 
 
@@ -94,6 +113,10 @@ int main(int argc, char* argv[])
     ns+"/denoised_filled_edge_image", sub_pub_queues_size, callback_edges_image);
   dist_surface_pub = n.advertise<sensor_msgs::Image>(ns+"/distance_surface", sub_pub_queues_size);
 
+#if FPS_MEASUREMENT
+  myfile.open(string(FPS_MEASUREMENT_FOLDER_PATH) + "/ds.txt");
+#endif
+
   // Call to ros::spin() to process incomming events until Ctrl+C is pressed
   ros::spin();
 
@@ -101,6 +124,10 @@ int main(int argc, char* argv[])
   if(use_gpu_version) {
     free_gpu_memory();
   }
+
+#if FPS_MEASUREMENT
+  myfile.close();
+#endif
 
   return 0;
 }

@@ -16,7 +16,7 @@
  * created image is sent for further processing.
  *
  * \param evts_to_process Buffer of events to use for creating the edge image
- * \param edge_image_ptr Pointer to the output edge image OpenCV matrix 
+ * \param edge_image_ptr Pointer to the output edge image OpenCV matrix
  * \param height Height of the edge image
  * \param width Width of the edge image
  * \param undistortion_matrix Matrix for undistorting the events (if needed)

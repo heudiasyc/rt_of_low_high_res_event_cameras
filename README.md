@@ -93,6 +93,23 @@ Once done, simply modify the `HDF5_SDK_AVAILABLE` variable from `false` to `true
 catkin build rt_of_low_high_res_event_cameras
 ```
 
+## Measuring the performance of the code
+
+If you want to evaluate the inference time of each module of the pipeline, modify the `FPS_MEASUREMENT` variable from `false` to `true` and modify the `FPS_MEASUREMENT_FOLDER_PATH` to point to the folder of your choice in the [include/rt_of_low_high_res_event_cameras/defines.hpp](./include/rt_of_low_high_res_event_cameras/defines.hpp) file, and recompile the code to make these changes effective:
+
+```txt
+catkin build rt_of_low_high_res_event_cameras
+```
+
+When the code is executed, four text files will be created in your folder, one for each module of the pipeline:
+
+- `edges.txt` for the edge image creation
+- `df.txt` for the denoising and filling
+- `ds.txt` for the computation of the distance surface
+- `of.txt` for the computation of the optical flow
+
+These files contain the measured inference times in milliseconds (1 line corresponds to 1 output).
+
 ## Code details
 
 The code was developed so as to be as modular as possible. Each of the four modules of our pipeline architecture (edges image formation, denoising & filling, distance transform, optical flow computation) was implemented as an independent ROS node. A fifth node was also added, to visualize the optical flow field as images. While this choice of separate ROS nodes may not be as optimized as using nodelets for instance (or simply not using ROS), it allows for modularity and for making our code easier to use and modify in a wide variety of situations.
