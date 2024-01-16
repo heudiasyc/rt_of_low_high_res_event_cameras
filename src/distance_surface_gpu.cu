@@ -276,10 +276,9 @@ void ds_norm_kernel(
       d_normalized_dist_surface[i] = min(ceil(logf(sqrtf(d_dist_surface[i])+1) / max * 255), 255.);
     }
   } else if(formulation == 3) { // Exponential
-    float max = 1-expf(-sqrtf(d_dist_surface_max_value)/ALPHA);
     for(int i = index; i < nb_elems; i += stride) {
       d_normalized_dist_surface[i] = min(
-        (1-expf(-sqrtf(d_dist_surface[i])/ALPHA)) / max * 255, 255.);
+        (1-expf(-sqrtf(d_dist_surface[i])/ALPHA)) * 255, 255.);
     }
   } else {
     printf("Wrong distance surface formulation index!\n");
@@ -412,16 +411,19 @@ Mat distance_surface_gpu(const Mat& edges, string formulation)
   // 2) applying the specific required formulation for the distance surface (linear, linear-bound,
   //    logarithmic, or exponential)
 
-  // We first have to find the maximum value of the distance surface. For that purpose, we use the
-  // previously maximum values found for each column.
+  // For every formulation other than the inverse exponential one, we first have to find the
+  // maximum value of the distance surface. For that purpose, we use the previously maximum values
+  // found for each column.
   // Note also that a GPU kernel is used here, but without any parallelization. We could use a CPU
   // function, but since these maximum values are stored in the GPU memory, we want to avoid
   // useless copies, hence the GPU kernel.
-  find_dist_surface_max_value<<<1, 1>>>(d_dist_surface_cols_max_value, edges.cols);
+  if(formulation_nbr != 3) {
+    find_dist_surface_max_value<<<1, 1>>>(d_dist_surface_cols_max_value, edges.cols);
 
-  // And we wait for the computation to finish
-  cudaDeviceSynchronize();
-  
+    // And we wait for the computation to finish
+    cudaDeviceSynchronize();
+  }
+
   // We then launch the distance surface normalization kernel, as a set of blocks, each block
   // containing 64 threads
   const int threads_per_block_norm = 64;
