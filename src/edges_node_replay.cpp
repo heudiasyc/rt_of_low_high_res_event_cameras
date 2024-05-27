@@ -477,6 +477,10 @@ int main(int argc, char* argv[])
   myfile.open(string(FPS_MEASUREMENT_FOLDER_PATH) + "/edges.txt");
 #endif
 
+  // We sleep for just a second, to make sure all the other nodes are launched (otherwise the first
+  // few edge images may get lost)
+  sleep(1);
+
   // Finally, we process all the events from the given file
   file_processing_function(input_file, calibration_file, accumulation_window);
 
