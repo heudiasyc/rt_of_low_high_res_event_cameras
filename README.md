@@ -24,7 +24,30 @@ Our dataset can be downloaded from the following webpage: <https://datasets.hds.
 
 In this work, we propose an optimized framework for computing optical flow in real-time, with both low- and high-resolution event cameras, by computing dense image-like representations from the events through the use of our "inverse exponential distance surface".
 
-## Installing and compiling the code
+## Installing and compiling the code (with Docker)
+
+The easiest way to install, compile, and run our code is through the use of Docker.\
+If you want to exploit the real-time capabilities of our method however, we recommend that you compile and install the code directly on your machine (see the "without Docker" section below).
+
+Simply use the given Dockerfile to install all the dependencies and compile the code:
+
+```txt
+docker build -t rt_of_low_high_res_event_cameras .
+```
+
+Then, to run the built container interactively, we recommend the use of [rocker](https://github.com/osrf/rocker), which can be installed on the host with pip:
+
+```txt
+pip install rocker
+```
+
+Once done, the following command can be used to launch the container with GPU support, X11 forwarding, and access to files in the home folder:
+
+```txt
+rocker --nvidia --x11 --home rt_of_low_high_res_event_cameras
+```
+
+## Installing and compiling the code (without Docker)
 
 This code has originally been developed and tested with Ubuntu 20.04, ROS Noetic, CUDA 11.5+ and OpenCV 4.2.\
 It is also compatible with Ubuntu 18.04, ROS Melodic, CUDA 11.5+ and OpenCV 3.2.\
