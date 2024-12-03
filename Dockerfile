@@ -6,11 +6,11 @@ SHELL ["/bin/bash", "-c"]
 
 # We install some required packages
 RUN apt update
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt install -y build-essential curl git nano software-properties-common tzdata
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt install -y build-essential git nano software-properties-common tzdata wget
 
 # We setup ROS by following the wiki instructions (https://wiki.ros.org/noetic/Installation/Ubuntu)
 RUN echo "deb http://packages.ros.org/ros/ubuntu focal main" > /etc/apt/sources.list.d/ros-latest.list
-RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
+RUN wget --no-check-certificate -qO - https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
 RUN apt update
 RUN apt install -y ros-noetic-ros-base ros-noetic-catkin ros-noetic-rqt-image-view python3-catkin-tools
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
