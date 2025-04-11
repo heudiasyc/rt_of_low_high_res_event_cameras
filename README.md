@@ -1,6 +1,6 @@
 # Real-Time Optical Flow for Vehicular Perception with Low- and High-Resolution Event Cameras
 
-![Our pipeline](https://www.hds.utc.fr/~vbrebion/dokuwiki/_media/fr/pipeline.svg)
+![Our pipeline](https://vbrebion.github.io/resources/publication_teasers_github/rtef.svg)
 
 This repository holds the code associated with the "Real-Time Optical Flow for Vehicular Perception with Low- and High-Resolution Event Cameras" article. If you use this code as part of your work, please cite:
 
