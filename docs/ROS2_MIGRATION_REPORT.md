@@ -363,7 +363,7 @@ The ROS2 migration is maintained in the dedicated Git branch:
 
 `ros2`
 
-The original ROS1 implementation and documentation remain available on the `master` branch. The ROS1 source files are also retained in the `ros2` branch for reference and comparison.
+The original ROS1 implementation and documentation are preserved on the master branch. The ros2 branch contains the migrated ROS2 packages, documentation, and visualization tools.
 
 The repository is organized as follows:
 
