@@ -4,7 +4,9 @@
 
 This project migrates the real-time optical flow pipeline for event cameras from ROS1 to ROS2 Jazzy.
 
-The original implementation is preserved in the repository, while the ROS2 implementation is maintained separately under the `ros2/` directory.
+The migration is based on the original implementation of *Real-Time Optical Flow for Vehicular Perception with Low- and High-Resolution Event Cameras* by Vincent Brebion, Julien Moreau, and Franck Davoine.
+
+The original ROS1 implementation remains available on the `master` branch, while the ROS2 implementation is maintained separately under the `ros2/` directory of the `ros2` branch.
 
 The main objective is to preserve the original four-stage processing architecture while adapting the software to the ROS2 communication system, build environment, and GPU dependencies.
 
@@ -66,35 +68,37 @@ The validated processing chain is:
 
 ```text
 Event camera / ROS2 event dataset
-                |
-                v
+               |
+               v
     events_accumulation_node
-                |
-                v
+               |
+               v
           /edge_image
-                |
-                v
+               |
+               v
      denoising_filling_node
-                |
-                v
+               |
+               v
   /denoised_filled_edge_image
-                |
-                v
+               |
+               v
  distance_surface_original_node
-                |
-                v
+               |
+               v
     /distance_surface_original
-                |
-                v
+               |
+               v
        optical_flow_gpu_node
-                |
-                v
+               |
+               v
           /optical_flow
 ```
 
 The image-processing stages exchange `sensor_msgs/msg/Image` messages.
 
 The event input uses the custom ROS2 message type `rt_of_event_msgs/msg/EventArray`.
+
+For live DAVIS240C operation, a separate `davis_event_adapter` package provides event-message adaptation before the events enter the processing pipeline.
 
 ## 3. Technical Challenges and Solutions
 
@@ -133,6 +137,8 @@ A separate package, `davis_event_adapter`, was also included for event-camera me
 **Validation**
 
 The ROS2 pipeline successfully processed the converted checkerboard event dataset.
+
+The DAVIS event adapter was also used during the live camera demonstration.
 
 ### 3.3 CUDA Compiler Detection
 
@@ -249,6 +255,8 @@ This verification reduces the risk of accidentally relying on source files that 
 | Image resolution | 1280 × 720 |
 | Dataset playback rate | 1.0× |
 
+The checkerboard dataset was used for quantitative measurements. A separate live demonstration was conducted using a DAVIS240C event camera.
+
 ### 4.2 Pipeline Startup
 
 The following four nodes were confirmed to be running:
@@ -305,7 +313,36 @@ The mean computation time across these five samples was approximately **7.98 ms*
 
 These measurements represent a small consecutive sample and should not be interpreted as the average performance of the entire dataset.
 
-### 4.6 Interpretation
+### 4.6 Live DAVIS240C Validation
+
+The ROS2 pipeline was also tested with a DAVIS240C event camera using the `libcaer_driver` and `davis_event_adapter` packages.
+
+During the demonstration, a hand was moved vertically in front of the camera to produce events corresponding to different motion directions.
+
+A Python visualization script, `visualize_optical_flow.py`, was used to convert the computed optical flow into a color-coded image.
+
+The visualization uses HSV color space:
+
+- **Hue** represents optical flow direction.
+- **Saturation** is fixed at its maximum value.
+- **Brightness** represents optical flow magnitude.
+
+The visualization subscribes to `/optical_flow` and publishes the resulting color image on `/optical_flow_visualization`.
+
+Two screenshots were recorded during the demonstration:
+
+| Upward hand movement | Downward hand movement |
+|:---:|:---:|
+| ![Upward hand movement](../ros2/images/davis_flow_1.png) | ![Downward hand movement](../ros2/images/davis_flow_2.png) |
+| Predominantly purple optical flow | Predominantly yellow optical flow |
+
+The observed color differences illustrate how the visualization distinguishes different motion directions.
+
+This experiment provides qualitative evidence that the migrated pipeline can process live DAVIS240C event data and generate optical flow visualization.
+
+However, a detailed quantitative performance evaluation with live camera input has not yet been conducted.
+
+### 4.7 Interpretation
 
 The experimental results demonstrate that:
 
@@ -313,34 +350,52 @@ The experimental results demonstrate that:
 2. All four processing modules can run together.
 3. The pipeline can process converted event-camera data.
 4. The GPU optical flow module can publish 1280 × 720 frames.
-5. The complete system achieves an observed publication rate of approximately 57.56 FPS in the reported test.
+5. The complete system achieves an observed publication rate of approximately 57.56 FPS in the reported checkerboard replay test.
+6. The pipeline can also process live DAVIS240C events and produce color-coded optical flow visualization.
 
 A controlled comparison with the original ROS1 implementation would require equivalent hardware, datasets, processing parameters, and measurement methods.
 
+The current validation establishes functional operation of the migrated pipeline under the tested configurations. It does not demonstrate complete feature equivalence with every capability of the original ROS1 implementation.
+
 ## 5. Repository Organization
 
-The ROS2 migration is maintained in a separate Git branch:
+The ROS2 migration is maintained in the dedicated Git branch:
 
-`ros2-jazzy-migration`
+`ros2`
 
-The original ROS1 implementation remains at the repository root.
+The original ROS1 implementation and documentation remain available on the `master` branch. The ROS1 source files are also retained in the `ros2` branch for reference and comparison.
 
-The ROS2 source code is organized as follows:
+The repository is organized as follows:
 
 ```text
+README.md
+LICENSE
+docs/
+└── ROS2_MIGRATION_REPORT.md
 ros2/
 ├── README.md
 ├── rt_of_event_msgs/
 │   └── msg/
 ├── davis_event_adapter/
 │   └── src/
-└── rt_of_ros2/
-    ├── config/
-    ├── cuda/
-    ├── launch/
-    ├── src/
-    └── test/
+├── rt_of_ros2/
+│   ├── config/
+│   ├── cuda/
+│   ├── launch/
+│   ├── src/
+│   └── test/
+├── tools/
+│   └── visualize_optical_flow.py
+└── images/
+    ├── davis_flow_1.png
+    └── davis_flow_2.png
 ```
+
+The repository root `README.md` provides an overview of the ROS2 migration.
+
+The `ros2/README.md` file contains installation, compilation, checkerboard dataset replay, and live DAVIS240C demonstration instructions.
+
+The present report documents the migration process, technical challenges, and experimental validation.
 
 The external GPU library is built separately and is not included as a compiled binary in the repository.
 
@@ -352,13 +407,16 @@ The ROS1-to-ROS2 Jazzy migration has reached a functional validation milestone.
 
 The migrated implementation preserves the four-stage optical flow processing architecture and successfully operates with GPU acceleration.
 
-Independent compilation, complete pipeline startup, dataset playback, and optical flow publication have been verified.
+Independent compilation, complete pipeline startup, checkerboard dataset playback, optical flow publication, and live DAVIS240C visualization have been verified.
+
+The reported checkerboard replay experiment achieved an observed optical flow publication frequency of approximately **57.56 FPS** at a resolution of 1280 × 720.
 
 Future work may include:
 
 - Further performance profiling and optimization.
-- Additional validation with live event-camera input.
+- Quantitative evaluation of the pipeline using live event-camera input.
 - More extensive comparisons with the original ROS1 implementation.
+- Validation of additional camera models and dataset formats.
 - Refactoring the processing algorithms into ROS-independent components.
 
 The final objective of the potential ROS-independent refactoring would be to separate the core algorithms from middleware-specific communication interfaces, while preserving the existing processing behavior.
