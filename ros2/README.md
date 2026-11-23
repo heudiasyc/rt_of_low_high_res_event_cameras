@@ -3,7 +3,7 @@
 This directory contains the ROS2 Jazzy migration of the
 real-time optical flow pipeline for event cameras.
 
-The original ROS1 implementation is preserved at the repository root.
+The original ROS1 implementation and documentation are preserved on the master branch. This branch contains the ROS2 migration.
 
 ## Environment
 
