@@ -1,0 +1,8 @@
+/rt_of_low_high_res_event_cameras/events_txt_node:
+  ros__parameters:
+    input_file: "/CHANGE/ME/events.txt"
+    width: 240
+    height: 180
+    accumulation_window_ms: 25
+    denoising_min_neighbours: 1
+    filling_min_neighbours: 4

@@ -1,0 +1,40 @@
+# ROS / colcon build outputs
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# Compiled binaries
+*.o
+*.so
+*.a
+
+# Temporary and backup files
+*.bak
+*.backup
+*.swp
+*~
+*.before_*
+
+# Large datasets and recordings
+*.bag
+*.db3
+*.mcap
+*.db3-wal
+*.db3-shm
+
+# Local experimental results
+*.log
+*.csv
+
+# Local environment
+.env
+.vscode/

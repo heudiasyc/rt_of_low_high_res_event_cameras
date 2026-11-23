@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<package format="3"><name>rt_of_ros2</name><version>0.1.0</version><description>Stage 1 ROS2 event accumulation and denoising</description><maintainer email="maintainer@example.com">Migration user</maintainer><license>CeCILL-2.1</license><buildtool_depend>ament_cmake</buildtool_depend><depend>rclcpp</depend><depend>sensor_msgs</depend><depend>cv_bridge</depend><depend>OpenCV</depend><export><build_type>ament_cmake</build_type></export><depend>rt_of_event_msgs</depend></package>
