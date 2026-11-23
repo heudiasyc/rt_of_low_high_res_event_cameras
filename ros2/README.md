@@ -111,6 +111,102 @@ The complete pipeline can be started with:
 The event input source must also be started separately
 according to the selected camera or dataset.
 
+## Offline Dataset Replay
+
+The pipeline was validated using the converted `checkerboard` event-camera dataset.
+
+The ROS2 bag is not included in this repository due to its size.
+
+### Run
+
+Source ROS2 Jazzy and the built workspace in each terminal:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/rt_of_jazzy_ws/install/setup.bash
+```
+
+**Terminal 1 — Start the optical flow pipeline**
+
+```bash
+ros2 launch rt_of_ros2 full_pipeline.launch.py
+```
+
+**Terminal 2 — Replay the dataset**
+
+```bash
+ros2 bag play /path/to/checkerboard_ros2 --rate 1.0
+```
+
+Replace `/path/to/checkerboard_ros2` with the actual ROS2 bag directory.
+
+**Terminal 3 — Monitor optical flow output (optional)**
+
+```bash
+ros2 topic hz /optical_flow
+```
+
+### Validation
+
+The pipeline was successfully tested with 1280 × 720 event data.
+
+The last observed cumulative-window publication rate was approximately **57.56 FPS** at 1.0× dataset playback speed.
+
+Detailed migration and performance results are available in [`docs/ROS2_MIGRATION_REPORT.md`](../docs/ROS2_MIGRATION_REPORT.md).
+
+## Live DAVIS240C Demonstration
+
+The pipeline was tested with a DAVIS240C event camera. A hand was moved vertically in front of the camera to demonstrate color-coded optical flow visualization.
+
+**Additional dependencies:** `libcaer_driver`, `rqt_image_view`, `rclpy`, `cv_bridge`, OpenCV and NumPy. The `libcaer_driver` must be installed separately.
+
+### Run
+
+Source ROS2 Jazzy and the built workspace in each terminal:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/rt_of_jazzy_ws/install/setup.bash
+```
+
+Then run the following commands in separate terminals:
+
+**1. DAVIS camera driver**
+```bash
+ros2 launch libcaer_driver driver_node.launch.py device_type:=davis
+```
+
+**2. Event adapter**
+```bash
+ros2 run davis_event_adapter davis_event_adapter_node
+```
+
+**3. Optical flow pipeline**
+```bash
+ros2 launch rt_of_ros2 full_pipeline.launch.py
+```
+
+**4. Color visualization** (from the repository root)
+```bash
+python3 ros2/tools/visualize_optical_flow.py
+```
+
+**5. Image viewer**
+```bash
+ros2 run rqt_image_view rqt_image_view
+```
+
+Select `/optical_flow_visualization` in the image viewer.
+
+### Results
+
+The visualization uses color to represent optical flow direction and brightness to represent motion magnitude.
+
+| Upward hand movement | Downward hand movement |
+|:---:|:---:|
+| ![Upward motion](images/davis_flow_1.png) | ![Downward motion](images/davis_flow_2.png) |
+| Predominantly purple | Predominantly yellow |
+
 ## Notes
 
 The original ROS1 implementation remains unchanged.
@@ -120,3 +216,4 @@ logs are not included in this repository.
 
 A future standalone implementation without ROS may be
 developed separately.
+
