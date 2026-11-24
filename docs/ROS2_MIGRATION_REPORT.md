@@ -342,7 +342,29 @@ This experiment provides qualitative evidence that the migrated pipeline can pro
 
 However, a detailed quantitative performance evaluation with live camera input has not yet been conducted.
 
-### 4.7 Interpretation
+### 4.7 DSEC Accumulation Window Evaluation
+
+The original ROS1 implementation uses an event accumulation window of 100 ms for the DSEC dataset. However, experiments conducted on the `interlaken_00_b` sequence revealed that this configuration may lead to excessive event accumulation in high-density scenes.
+
+Three accumulation windows were evaluated using the first 20 seconds of the same sequence at a resolution of 640 × 480 and a replay rate of 1.0. Each experiment processed 538,654,788 events, with no invalid event coordinates detected.
+
+| Accumulation window | 100 ms | 50 ms | 25 ms |
+|---|---:|---:|---:|
+| Theoretical output frequency | 10 Hz | 20 Hz | 40 Hz |
+| Measured edge image frequency | 9.265 Hz | 17.469 Hz | 33.012 Hz |
+| Measured distance surface frequency | 9.408 Hz | 17.514 Hz | 33.755 Hz |
+| Subscriber-measured optical flow frequency | 7.370 Hz | 12.015 Hz | 14.688 Hz |
+| Published optical flow frames | 199 | 399 | 799 |
+
+With the original 100 ms accumulation window, the high event density resulted in thick and overlapping object boundaries, particularly in vegetation and other highly textured regions. In some frames, more than 80% of the pixels in the binary edge image were activated. This excessive accumulation may reduce spatial discrimination in the distance surface and contribute to large aggregated color regions and dark areas in the optical flow visualization.
+
+Reducing the accumulation window to 25 ms improved temporal resolution, visual continuity, and the distinguishability of object boundaries. Among the three tested configurations, the 25 ms window provided the smoothest visual results.
+
+Consequently, 25 ms was selected as the default accumulation window for DSEC replay in the ROS2 implementation. The original 100 ms configuration remains available through the launch parameter.
+
+The reported topic frequencies represent subscriber-side measurements and should not be interpreted as direct measurements of GPU computational throughput. Furthermore, the visual improvements are qualitative; quantitative optical flow accuracy has not yet been evaluated against ground-truth data.
+
+### 4.8 Interpretation
 
 The experimental results demonstrate that:
 
