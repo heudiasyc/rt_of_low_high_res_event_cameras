@@ -100,6 +100,45 @@ The event input uses the custom ROS2 message type `rt_of_event_msgs/msg/EventArr
 
 For live DAVIS240C operation, a separate `davis_event_adapter` package provides event-message adaptation before the events enter the processing pipeline.
 
+### 2.6 Optimized DSEC Replay Architecture
+
+The initial DSEC implementation reads HDF5 event data and publishes ROS2 EventArray messages before event accumulation. However, this architecture introduces substantial communication and serialization overhead when processing high-density event sequences.
+
+To reduce this overhead, HDF5 reading and event accumulation were integrated into a single node, `events_h5_edges_node`.
+
+```text
+DSEC events.h5
+      |
+      v
+events_h5_edges_node
+  - Chunked HDF5 reading
+  - Optional event rectification
+  - Direct event accumulation
+      |
+      v
+/edge_image
+      |
+      v
+Denoising and Filling
+      |
+      v
+Distance Transform
+      |
+      v
+GPU Optical Flow
+```
+
+The optimized implementation reads up to eight million events per chunk. Only event coordinates and timestamps are loaded during processing, since polarity is not required for binary edge image generation.
+
+The downstream processing stages remain unchanged.
+
+Two reusable components were introduced:
+
+- `event_accumulator.hpp`: event accumulation and binary edge image generation.
+- `rectification_h5.hpp`: HDF5 rectification map loading and coordinate mapping preparation.
+
+Both components are independent of ROS communication interfaces, providing an initial foundation for future standalone development.
+
 ## 3. Technical Challenges and Solutions
 
 ### 3.1 ROS1 and ROS2 Communication Differences
@@ -241,6 +280,24 @@ The complete pipeline was then launched from this independent workspace and test
 
 This verification reduces the risk of accidentally relying on source files that exist only in the original development workspace.
 
+### 3.7 Optional HDF5 Integration
+
+Native DSEC replay requires the HDF5 C++ library and the Blosc compression filter.
+
+To avoid introducing a mandatory dependency for users who only require live camera input or ROS2 bag replay, HDF5 support is controlled by the `ENABLE_HDF5` CMake option.
+
+An independent build was performed with:
+
+```bash
+-DENABLE_HDF5=OFF
+```
+
+All three ROS2 packages compiled successfully in 18.6 seconds.
+
+The seven non-HDF5 executables remained available, while `events_h5_node` and `events_h5_edges_node` were excluded.
+
+This experiment validates the optional build configuration. The test was conducted on a system with HDF5 installed, rather than on an HDF5-free system.
+
 ## 4. Experimental Validation
 
 ### 4.1 Test Environment
@@ -364,7 +421,65 @@ Consequently, 25 ms was selected as the default accumulation window for DSEC rep
 
 The reported topic frequencies represent subscriber-side measurements and should not be interpreted as direct measurements of GPU computational throughput. Furthermore, the visual improvements are qualitative; quantitative optical flow accuracy has not yet been evaluated against ground-truth data.
 
-### 4.8 Interpretation
+### 4.8 Complete DSEC Sequence Validation
+
+The complete `interlaken_00_b` sequence was processed using the optimized HDF5 replay architecture without event rectification.
+
+| Metric | Result |
+|---|---:|
+| Image resolution | 640 × 480 |
+| Accumulation window | 25 ms |
+| Configured replay rate | 1.0× |
+| Processed events | 1,546,817,686 |
+| Invalid raw event coordinates | 0 |
+| Edge images generated | 3,231 |
+| Denoising and filling frames | 3,231 |
+| Distance surface frames | 3,231 |
+| Optical flow frames published | 3,231 |
+| Events in the final incomplete window | 278,709 |
+
+The final incomplete accumulation window was not published, consistent with the original window-based processing behavior.
+
+The matching frame counts indicate that no frame-count loss was observed between the processing stages during this experiment.
+
+The final three GPU optical flow computation measurements were:
+
+| Frame | Computation time |
+|---|---:|
+| 3229 | 6.288 ms |
+| 3230 | 6.417 ms |
+| 3231 | 6.397 ms |
+| Mean of the three samples | 6.368 ms |
+
+These measurements represent a small sample rather than the average computational performance of the complete sequence.
+
+The complete demonstration recording lasted approximately 83 seconds. This recording duration should not be interpreted as a precise measurement of end-to-end processing time.
+
+[Download the DSEC optical flow demonstration video](DSEC_25ms_ROS2_demo.mp4).
+
+### 4.9 Optional Event Rectification Validation
+
+The original HDF5-based event rectification mechanism was adapted to the ROS2 implementation.
+
+The rectification map is loaded once during initialization. Each event coordinate is mapped to its rectified position before edge image generation. Events mapped outside the image boundaries are excluded from the image without affecting the accumulation-window timing.
+
+Two five-second experiments were conducted using the same DSEC sequence and a 25 ms accumulation window.
+
+| Metric | Without rectification | With rectification |
+|---|---:|---:|
+| Published optical flow frames | 199 | 199 |
+| Events rejected by rectification | 0 | 11,680,837 |
+| Final edge image nonzero pixels | 178,239 | 167,823 |
+| Final distance surface nonzero pixels | 128,961 | 139,377 |
+| Final GPU computation time | 6.471 ms | 6.322 ms |
+
+Both configurations successfully generated optical flow frames.
+
+Rectification is disabled by default and can be enabled through the `calibration_file` launch parameter.
+
+These experiments validate the functional integration of optional event rectification. Quantitative optical flow accuracy has not yet been evaluated against ground-truth data.
+
+### 4.10 Interpretation
 
 The experimental results demonstrate that:
 
@@ -393,7 +508,8 @@ The repository is organized as follows:
 README.md
 LICENSE
 docs/
-└── ROS2_MIGRATION_REPORT.md
+├── ROS2_MIGRATION_REPORT.md
+└── DSEC_25ms_ROS2_demo.mp4
 ros2/
 ├── README.md
 ├── rt_of_event_msgs/
@@ -403,6 +519,10 @@ ros2/
 ├── rt_of_ros2/
 │   ├── config/
 │   ├── cuda/
+│   ├── include/
+│   │   └── rt_of_ros2/
+│   │       ├── event_accumulator.hpp
+│   │       └── rectification_h5.hpp
 │   ├── launch/
 │   ├── src/
 │   └── test/
@@ -432,6 +552,12 @@ The migrated implementation preserves the four-stage optical flow processing arc
 Independent compilation, complete pipeline startup, checkerboard dataset playback, optical flow publication, and live DAVIS240C visualization have been verified.
 
 The reported checkerboard replay experiment achieved an observed optical flow publication frequency of approximately **57.56 FPS** at a resolution of 1280 × 720.
+
+The migration also supports native DSEC HDF5 replay, optimized event accumulation, and optional event rectification.
+
+The complete `interlaken_00_b` sequence was successfully processed, generating 3,231 optical flow frames from approximately 1.55 billion events.
+
+The next development stage will focus on separating the core processing algorithms from ROS-specific interfaces to enable standalone execution.
 
 Future work may include:
 
