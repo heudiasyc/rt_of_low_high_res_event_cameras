@@ -33,6 +33,7 @@ The migrated pipeline has been tested using:
 
 - **Checkerboard dataset replay:** ROS2 bag playback at 1.0× speed, with 1280 × 720 event data.
 - **DAVIS240C live camera:** real-time event processing and color-coded optical flow visualization.
+- **DSEC dataset:** native HDF5 event replay at 640 × 480, with optional event rectification.
 
 During the checkerboard replay test, the observed optical flow publication rate was approximately **57.6 FPS**.
 
@@ -47,9 +48,23 @@ The following screenshots show the optical flow generated when a hand moves vert
 
 The visualization uses color to represent optical flow direction and brightness to represent motion magnitude.
 
+### DSEC Optical Flow Demonstration
+
+The ROS2 implementation supports native HDF5 replay of the DSEC dataset, with optimized event accumulation and optional event rectification.
+
+The complete `interlaken_00_b` sequence was successfully processed:
+
+- Resolution: 640 × 480
+- Accumulation window: 25 ms
+- Configured replay rate: 1.0×
+- Processed events: 1,546,817,686
+- Published optical flow frames: 3,231
+
+[Download the DSEC demonstration video (MP4, 32.3 MB)](docs/DSEC_25ms_ROS2_demo.mp4)
+
 ## Documentation
 
-- **[ROS2 Installation and Usage Guide](ros2/README.md)** — dependencies, compilation, dataset replay, and live DAVIS240C demonstration.
+- **[ROS2 Installation and Usage Guide](ros2/README.md)** — dependencies, compilation, checkerboard and DSEC replay, and live DAVIS240C demonstration.
 - **[ROS2 Migration Report](docs/ROS2_MIGRATION_REPORT.md)** — architecture, migration process, technical challenges, and experimental results.
 - **[Color Optical Flow Visualization Script](ros2/tools/visualize_optical_flow.py)** — ROS2 visualization utility.
 
@@ -73,7 +88,7 @@ The original repository also provides information about the [High-Speed High-Def
 
 ## Notes
 
-This branch focuses on the ROS2 migration and its validated functionality. The original ROS1 source files remain in the repository for reference and comparison.
+This branch focuses on the ROS2 migration and its validated functionality. The original ROS1 implementation is preserved on the `master` branch.
 
 Additional functionality available in the original ROS1 implementation should not be assumed to have been migrated unless explicitly documented.
 
