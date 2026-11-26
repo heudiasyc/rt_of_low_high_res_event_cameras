@@ -122,4 +122,79 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
+
+# Optional HDF5 support for DSEC event replay.
+option(ENABLE_HDF5 "Enable HDF5 event replay support" ON)
+
+if(ENABLE_HDF5)
+  find_package(HDF5 QUIET COMPONENTS CXX)
+
+  if(HDF5_FOUND)
+    add_executable(events_h5_node src/events_h5_node.cpp)
+
+    ament_target_dependencies(
+      events_h5_node
+      rclcpp
+      rt_of_event_msgs
+    )
+
+    target_include_directories(
+      events_h5_node PRIVATE
+      ${HDF5_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(
+      events_h5_node
+      ${HDF5_CXX_LIBRARIES}
+      ${HDF5_LIBRARIES}
+    )
+
+    install(
+      TARGETS events_h5_node
+      DESTINATION lib/${PROJECT_NAME}
+    )
+
+
+    # Direct HDF5-to-edge-image replay.
+    add_executable(
+      events_h5_edges_node
+      src/events_h5_edges_node.cpp
+    )
+
+    ament_target_dependencies(
+      events_h5_edges_node
+      rclcpp sensor_msgs cv_bridge
+    )
+
+    target_include_directories(
+      events_h5_edges_node PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/include
+      ${HDF5_INCLUDE_DIRS}
+      ${OpenCV_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(
+      events_h5_edges_node
+      ${HDF5_CXX_LIBRARIES}
+      ${HDF5_LIBRARIES}
+      ${OpenCV_LIBS}
+    )
+
+    target_compile_options(
+      events_h5_edges_node PRIVATE -O3
+    )
+
+    install(
+      TARGETS events_h5_edges_node
+      DESTINATION lib/${PROJECT_NAME}
+    )
+
+    message(STATUS "HDF5 replay support: ENABLED")
+  else()
+    message(WARNING "HDF5 not found: HDF5 replay disabled")
+  endif()
+else()
+  message(STATUS "HDF5 replay support: DISABLED")
+endif()
+
 ament_package()
