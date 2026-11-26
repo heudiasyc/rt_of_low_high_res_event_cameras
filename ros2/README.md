@@ -75,6 +75,32 @@ If CMake cannot locate CUDA, specify the compiler explicitly:
 -DCUDAToolkit_ROOT=/usr/local/cuda-12.6
 ```
 
+## Optional HDF5 Dependency
+
+Native DSEC replay requires the HDF5 C++ library and the Blosc compression filter.
+
+On Ubuntu 24.04, install the required dependencies:
+
+```bash
+sudo apt install libhdf5-dev hdf5-tools hdf5-filter-plugin-blosc-serial
+```
+
+HDF5 support is enabled by default when the library is available.
+
+To explicitly enable or disable HDF5 support, use the corresponding CMake argument:
+
+```bash
+-DENABLE_HDF5=ON
+```
+
+or:
+
+```bash
+-DENABLE_HDF5=OFF
+```
+
+If HDF5 is unavailable or disabled, the HDF5 replay executables are excluded from the build. The other ROS2 processing modules remain available.
+
 ## Build
 
 Create a separate ROS2 workspace:
@@ -153,6 +179,110 @@ The pipeline was successfully tested with 1280 × 720 event data.
 The last observed cumulative-window publication rate was approximately **57.56 FPS** at 1.0× dataset playback speed.
 
 Detailed migration and performance results are available in [`docs/ROS2_MIGRATION_REPORT.md`](../docs/ROS2_MIGRATION_REPORT.md).
+
+## DSEC Dataset Replay
+
+The ROS2 implementation supports native DSEC HDF5 event replay without requiring conversion to a ROS bag.
+
+### Dataset Preparation
+
+Download the event data from the official [DSEC dataset website](https://dsec.ifi.uzh.ch/).
+
+The expected file structure is:
+
+```text
+interlaken_00_b/
+└── events/
+    └── left/
+        ├── events.h5
+        └── rectify_map.h5
+```
+
+The `rectify_map.h5` file is only required when event rectification is enabled.
+
+### Run
+
+Build the ROS2 packages with HDF5 support enabled.
+
+Source ROS2 Jazzy and the built workspace:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/rt_of_jazzy_ws/install/setup.bash
+```
+
+Start the optimized DSEC pipeline:
+
+```bash
+ros2 launch rt_of_ros2 dsec_replay.launch.py \
+  input_file:=/path/to/events.h5
+```
+
+The default accumulation window is 25 ms, selected based on experimental evaluation. The original 100 ms configuration remains available through the launch parameters.
+
+### Optional Event Rectification
+
+To enable event-coordinate rectification:
+
+```bash
+ros2 launch rt_of_ros2 dsec_replay.launch.py \
+  input_file:=/path/to/events.h5 \
+  calibration_file:=/path/to/rectify_map.h5
+```
+
+Rectification is disabled by default.
+
+### Replay Parameters
+
+| Parameter | Default | Description |
+|---|---|---|
+| `input_file` | Required | Path to the HDF5 event file |
+| `calibration_file` | Empty | Optional HDF5 rectification map |
+| `accumulation_window_ms` | 25 | Event accumulation window in milliseconds |
+| `replay_rate` | 1.0 | Target replay speed |
+| `max_duration_sec` | 0.0 | Replay duration limit; zero means the complete sequence |
+
+For example, to replay the first 20 seconds using the original 100 ms accumulation window:
+
+```bash
+ros2 launch rt_of_ros2 dsec_replay.launch.py \
+  input_file:=/path/to/events.h5 \
+  accumulation_window_ms:=100 \
+  max_duration_sec:=20.0
+```
+
+### Visualization
+
+In separate terminals, source ROS2 and the built workspace as described above.
+
+From the repository root, start the visualization script:
+
+```bash
+python3 ros2/tools/visualize_optical_flow.py
+```
+
+Start the image viewer:
+
+```bash
+ros2 run rqt_image_view rqt_image_view
+```
+
+Select `/optical_flow_visualization` before starting dataset replay.
+
+### Alternative Replay Architecture
+
+The `dsec_replay_eventarray.launch.py` launch file provides an alternative implementation based on ROS2 EventArray messages.
+
+The optimized `dsec_replay.launch.py` is recommended for high-density DSEC sequences, as it avoids the communication overhead of transmitting raw events between ROS2 nodes.
+
+### Validation
+
+The complete `interlaken_00_b` sequence was successfully processed at a resolution of 640 × 480, generating 3,231 optical flow frames from approximately 1.55 billion events.
+
+Optional event rectification was also successfully tested.
+
+- [DSEC demonstration video](../docs/DSEC_25ms_ROS2_demo.mp4)
+- [Detailed experimental results](../docs/ROS2_MIGRATION_REPORT.md)
 
 ## Live DAVIS240C Demonstration
 
